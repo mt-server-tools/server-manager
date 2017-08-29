@@ -13,9 +13,17 @@ Install this tool:
 
 ## Planning
 
-### Step 1
+### Stage 1
 
 * Installs PPA and minetest, and supporting libraries
 * Creates accounts for servers
 * Pre-configures use of LevelDB
 * Creates systemd services
+
+### Stage 2
+
+* Add mod pull/install tool to add mods to the global mod folder
+
+### Stage 3
+
+* Support using Docker images
