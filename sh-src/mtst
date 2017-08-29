@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#%include autohelp.sh bashout.sh colours.sh
+
+#%include default-locations.sh new-server.sh
+
+mtst:parse_args() {
+	while [[ -n "$*" ]]; do
+		local arg="$1"; shift
+
+		case "$arg" in
+		new-server)
+			newserver:main "$@"
+			exit "$?"
+			;;
+		*)
+			faile "Unknown action $arg"
+			;;
+		esac
+	done
+}
+
+mtst:main() {
+	mtst:parse_args "$@"
+}
+
+mtst:main "$@"

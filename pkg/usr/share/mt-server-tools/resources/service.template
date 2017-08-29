@@ -1,0 +1,15 @@
+[Unit]
+
+Description={{description}}
+After={{after,default("network",true)}}
+
+[Service]
+ExecStart={{command_string,default("/usr/bin/minetest --server")}}
+User={{user_name}}
+Restart={{restart, default("always",true)}}
+PIDFile=/run/{{user_name}}.pid
+
+[Install]
+{% if wanted_by %}
+WantedBy={{wanted_by}}
+{% endif %}
