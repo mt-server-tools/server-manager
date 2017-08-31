@@ -1,0 +1,3 @@
+[submodule "autojinja"]
+	path = autojinja
+	url = https://github.com/taikedz/autojinja

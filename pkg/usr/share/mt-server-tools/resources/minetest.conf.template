@@ -1,3 +1,27 @@
+#:r -t title            The display name of the server in minetest lists
+#:r -a address          Address of the server
+#:r -p port             Port for the server
+#:r -n name             Admin player's name
+
+#:o -d description      Description of the server; defaults is to be same as title
+#:o -u url              Public web page for the server, defaults to minetest forum
+#:o -c announce         Whether to announce the server, default false
+#:o -v protocol         Strict protocol version check, default true
+#:o -m remotemedia      Remote media URL
+#:o -g game             Game, defaults to minetest
+#:o -w welcome          Message of the day to welcome players, defaults to Welcome
+#:o -x maxusers         Maximum number of users, default 15
+#:o -e damage           Enable damage, default true
+#:o -r creative         Creative mode, default false
+#:o -s seed             Map seed
+#:o -k password         Default password, default is to none
+#:o -z privs            Default privs, default interact, shout
+#:o -b basicprivs       basic privs, that players with basic_privs can grant/revoke, default interact, shout
+#:o -f distance         Player transfer distance, how far to see player names, default 30
+#:o -j pvp              Enable PvP, default true
+#:o -o spawn            Static spawn point, default none
+#:o -q abrange          Active Block Range, set to 1 for low-RAM (<=512MB) servers, default 2
+
 #    This file contains a list of all available settings and their default value for minetest.conf
 
 #    By default, all the settings are commented and not functional.
@@ -17,19 +41,19 @@
 
 #    Name of the server, to be displayed when players join and in the serverlist.
 #    type: string
-server_name = {{server_title, default("My Server")}}
+server_name = {{title}}
 
 #    Description of server, to be displayed when players join and in the serverlist.
 #    type: string
-server_description = {{server_description, default("Mine here",true)}}
+server_description = {{description, default(title,true)}}
 
 #    Domain name of server, to be displayed in the serverlist.
 #    type: string
-server_address = {{server_address, default("UNCONFIGURED",true)}}
+server_address = {{address}}
 
 #    Homepage of server, to be displayed in the serverlist.
 #    type: string
-server_url = {{webpage, default("http://forum.minetest.net", true)}}
+server_url = {{url, default("http://forum.minetest.net", true)}}
 
 #    Automaticaly report to the serverlist.
 #    type: bool
@@ -60,15 +84,15 @@ port = {{port}}
 #    Older clients are compatible in the sense that they will not crash when connecting
 #    to new servers, but they may not support all new features that you are expecting.
 #    type: bool
-strict_protocol_version_checking = {{strict_protocol, default("true",true)}}
+strict_protocol_version_checking = {{protocol, default("true",true)}}
 
 #    Specifies URL from which client fetches media instead of using UDP.
 #    $filename should be accessible from $remote_media$filename via cURL
 #    (obviously, remote_media should end with a slash).
 #    Files that are not present will be fetched the usual way.
 #    type: string
-{% if remote_media %}
-remote_media = {{remote_media}}
+{% if remotemedia %}
+remote_media = {{remotemedia}}
 {% else %}
 # remote_media =
 {% endif %}
@@ -105,15 +129,15 @@ remote_media = {{remote_media}}
 #    Default game when creating a new world.
 #    This will be overridden when creating a world from the main menu.
 #    type: string
-default_game = {{game_name, default("minetest")}}
+default_game = {{game, default("minetest")}}
 
 #    Message of the day displayed to players connecting.
 #    type: string
-motd = {{motd, default("Welcome !", true)}}
+motd = {{welcome, default("Welcome !", true)}}
 
 #    Maximum number of players that can connect simultaneously.
 #    type: int
-max_users = {{max_users, default("30",true)}}
+max_users = {{maxusers, default("15",true)}}
 
 #    World directory (everything in the world is stored here).
 #    Not needed if starting from the main menu.
@@ -131,33 +155,33 @@ max_users = {{max_users, default("30",true)}}
 
 #    Enable players getting damage and dying.
 #    type: bool
-enable_damage = {{enable_damage, default("true",true)}}
+enable_damage = {{damage, default("true",true)}}
 
 #    Enable creative mode for new created maps.
 #    type: bool
-creative_mode = {{enable_damage, default("false",true)}}
+creative_mode = {{creative, default("false",true)}}
 
 #    A chosen map seed for a new map, leave empty for random.
 #    Will be overridden when creating a new world in the main menu.
 #    type: string
-fixed_map_seed = {{map_seed,default("",true)}}
+fixed_map_seed = {{seed,default("",true)}}
 
 #    New users need to input this password.
 #    type: string
-default_password = {{pass_key, default("",true)}}
+default_password = {{password, default("",true)}}
 
 #    The privileges that new users automatically get.
 #    See /privs in game for a full list on your server and mod configuration.
 #    type: string
-default_privs = {{default_privs, default("interact, shout")}}
+default_privs = {{privs, default("interact, shout")}}
 
 #    Privileges that players with basic_privs can grant
 #    type: string
-basic_privs = {{basic_privs, default("interact, shout",true)}}
+basic_privs = {{basicprivs, default("interact, shout",true)}}
 
 #    Defines the maximal player transfer distance in blocks (0 = unlimited).
 #    type: int
-player_transfer_distance = {{player_transfer_distance, default("30",true)}}
+player_transfer_distance = {{distance, default("30",true)}}
 
 #    Whether to allow players to damage and kill each other.
 #    type: bool
@@ -165,7 +189,7 @@ enable_pvp = {{pvp, default("true", true)}}
 
 #    If this is set, players will always (re)spawn at the given position.
 #    type: string
-static_spawnpoint = {{spawn_pos, default("",true)}}
+static_spawnpoint = {{spawn, default("",true)}}
 
 #    If enabled, new players cannot join with an empty password.
 #    type: bool
@@ -182,16 +206,16 @@ disallow_empty_password = false
 
 #    A message to be displayed to all clients when the server shuts down.
 #    type: string
-kick_msg_shutdown = {{shutdown_message, default("Server shutting down.")}}
+kick_msg_shutdown = Server shutting down.
 
 #    A message to be displayed to all clients when the server crashes.
 #    type: string
-kick_msg_crash = {{crash_message, default("Server crash - try reconnecting after 10 seconds",true)}}
+kick_msg_crash = Server crash - please wait 10 seconds
 
 #    Whether to ask clients to reconnect after a (Lua) crash.
 #    Set this to true if your server is set up to restart automatically.
 #    type: bool
-ask_reconnect_on_crash = {{reconnect_on_crash, default("true",true)}}
+ask_reconnect_on_crash = true
 
 #    From how far clients know about objects, stated in mapblocks (16 nodes).
 #    type: int
@@ -200,11 +224,11 @@ ask_reconnect_on_crash = {{reconnect_on_crash, default("true",true)}}
 #    How large area of blocks are subject to the active block stuff, stated in mapblocks (16 nodes).
 #    In active blocks objects are loaded and ABMs run.
 #    type: int
-active_block_range = {{active_block_range, default("1",true)}}
+active_block_range = {{abrange, default("2",true)}}
 
 #    From how far blocks are sent to clients, stated in mapblocks (16 nodes).
 #    type: int
-max_block_send_distance = {{block_send_distance, default("4", true)}}
+max_block_send_distance = 4
 
 #    Maximum number of forceloaded mapblocks.
 #    type: int
@@ -279,7 +303,7 @@ max_block_send_distance = {{block_send_distance, default("4", true)}}
 #    How much the server will wait before unloading unused mapblocks.
 #    Higher value is smoother, but will use more RAM.
 #    type: int
-server_unload_unused_data_timeout = {{unload_unused_timeout, default("10", true)}}
+server_unload_unused_data_timeout = 10
 
 #    Maximum number of statically stored objects in a block.
 #    type: int
@@ -1086,7 +1110,7 @@ server_unload_unused_data_timeout = {{unload_unused_timeout, default("10", true)
 #    When running a server, clients connecting with this name are admins.
 #    When starting from the main menu, this is overridden.
 #    type: string
-name = {{admin, default("ADMIN",true)}}
+name = {{admin}}
 
 #    Set the language. Leave empty to use the system language.
 #    A restart is required after changing this.
