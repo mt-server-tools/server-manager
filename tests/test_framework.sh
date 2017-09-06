@@ -9,6 +9,10 @@ faile() {
 	exit
 }
 
+t:report() {
+	echo "---- $* ----" >&2
+}
+
 t:ok() {
 	echo "[32;1m$*[0m"
 }
@@ -31,4 +35,8 @@ t:expect() {
 	} || {
 		t:fail "$testname : expected [$value] but found [$target]"
 	}
+}
+
+autojinja() {
+	PYTHONPATH="$PYTHONPATH:autojinja/" autojinja/autojinja/run-autojinja "$@"
 }
