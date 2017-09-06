@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#%include bashout.sh colours.sh askuser.sh
+#%include bashout.sh colours.sh askuser.sh getbin.sh
 
 check_ppa_exists() {
 	grep minetest /etc/apt/sources.list* -r -q
@@ -8,8 +8,7 @@ check_ppa_exists() {
 
 add_ppa() {
 	check_ppa_exists && {
-		warne "PPA already setup - you may already have installed Minetest Server Tools."
-		uconfirm "Proceed with installation ?" || faile "Aborted."
+		warne "PPA already setup - skipping."
 		return
 	}
 	add-apt-repository -y ppa:minetestdevs/stable
@@ -17,7 +16,7 @@ add_ppa() {
 
 install_binaries() {
 	apt update
-	apt install minetest libleveldb1v5
+	apt install -y minetest libleveldb1v5
 }
 
 add_python_tools() {
@@ -26,20 +25,40 @@ add_python_tools() {
 	pip install jinja2
 }
 
+add_autojinja() {
+	if has_bin autojinja ; then
+		return
+	fi
+
+	if [[ -f "autojinja/install" ]]; then
+		(
+		cd autojinja
+		./install
+		)
+		return
+	fi
+
+	return 1
+}
+
 add_supporting_files() {
 	#FIXME -u option makes sure we don't wallop anything newer than our copy
-	#    we would really want to never overwrite anything, just in case...
+	#    but we would really want to never overwrite anything, just in case...
 	rsync -au pkg/ /
 }
 
 main() {
 	[[ "$UID" = 0 ]] || faile "You must be root to run this script."
 
-	add_ppa || faile "Could not install minetest PPA"
+	add_ppa          || faile "Could not install minetest PPA"
 	install_binaries || faile "Could not install minetest"
 	add_python_tools || faile "Could not add essential python tools"
+	add_autojinja    || faile "Could not install autojinja"
 
 	add_supporting_files
 	
 	infoe "Done."
 }
+
+cd "$(dirname "$0")"
+main "$@"
