@@ -2,12 +2,14 @@
 
 ### new-server Usage:help
 #
-# The `new-server` command helps set up a new game server in a dedicated account
+# The `new-server` command sets up a new game server in a dedicated account
 #
-# Required parameters:
+#     Required parameters
 #
 # -s, --sys-servername NAME
 # 	A system username to create to confine the server
+#
+# 	Cannot be called "root"
 #
 # -a, --admin ADMIN
 # 	The playername of the game admin
@@ -18,7 +20,7 @@
 # --hostname ADDRESS
 # 	The address or host name of the server
 #
-# Optional parameters:
+#     Optional parameters
 #
 # --description DESCRIPTION
 # 	A nice description for players to see in online lists
@@ -56,8 +58,15 @@ newserver:parse_args() {
 	newserver:verify_requirements
 }
 
+newserver:passwdf_check() {
+	if grep -P "^$1:" -q ; then
+		return 1
+	fi
+}
+
 newserver:verify_requirements() {
-	[[ -n "$MTST_sys_servername" ]] || faile "Account name required"
+	[[ -n "$MTST_sys_servername" ]] || faile "System account name required"
+	newserver:passwdf_check "$MTST_sys_servername" || faile "SYstem account already exists"
 	[[ -n "$MTST_game_admin" ]] || faile "Admin player name required"
 	[[ -n "$MTST_game_title" ]] || faile "Game title required"
 	[[ -n "$MTST_hostname" ]] || faile "Hostname required"
