@@ -110,13 +110,127 @@ export CBYEL="[1;33m"
 export CBBLU="[1;34m"
 export CBPUR="[1;35m"
 export CDEF="[0m"
+#!/bin/bash
+
+### AskUser Usage:bbuild
+# Present the user with questions on stdout
+###/doc
+
+
+yespat='^(yes|YES|y|Y)$'
+numpat='^[0-9]+$'
+rangepat='[0-9]+,[0-9]+'
+blankpat='^ *$'
+
+### uconfirm Usage:bbuild
+# Ask the user to confirm a closed question. Defaults to no
+#
+# returns 0 on successfully match 'y' or 'yes'
+# returns 1 otherwise
+###/doc
+function uconfirm {
+	read -p "$* [y/N] > " 1>&2
+	if [[ "$REPLY" =~ $yespat ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+### uask Usage:bbuild
+# Ask the user to provide some text
+#
+# returns the entered text
+###/doc
+function uask {
+	read -p "$* : " 1>&2
+	echo $REPLY
+}
+
+### uchoose_multi Usage:bbuild
+# Allows the user to choose from multiple choices
+#
+# uchose_multi MESG CHOICESTRING
+#
+#
+# MESG is a single string token that will be displayed as prompt
+#
+# CHOICESTRING is a comma-separated, or newline separated, or "\\n"-separated token string
+#
+# Equivalent strings include:
+#
+# * `"a\\nb\\nc"` - quoted and explicit newline escapes
+# * `"a,b,c"` - quoted and separated with commas
+# * `a , b , c` - not quoted, separated by commas
+# * (and `a`, `b` and `c` on their own lines)
+#
+# User input:
+#
+# User can choose by selecting
+#
+# * a single item by number
+# * a range of numbers (4,7 for range 4 to 7)
+# * or a string that matches the pattern
+#
+# All option lines that match will be returned, one per line
+#
+# If the user selects nothing, then function returns 1 and an empty stdout
+###/doc
+function uchoose_multi {
+	local mesg=$1; shift
+	local choices=$(echo "$*"|sed -r 's/ *, */\n/g')
+	debuge "CHOICES: $choices"
+
+	infoe "$mesg:" 
+	echo -e "$choices"|egrep '^' -n| sed 's/:/: /' 1>&2
+	
+	local sel=$(uask "Choice")
+	if [[ "$sel" =~ $blankpat ]]; then
+		return 1
+	elif [[ "$sel" =~ $numpat ]] || [[ "$sel" =~ $rangepat ]]; then
+		debuge "Number choice [$sel]"
+		echo -e "$choices" | sed -n "$sel p"
+	else
+		debuge "Pattern choice [$sel]"
+		echo -e "$choices"  |egrep "$(echo "$sel"|tr " " '|')"
+	fi
+	return 0
+}
+
+### uchoose Usage:bbuild
+# Ask the user to choose an item
+#
+# Like uchoose_multi, but will loop if the user selects more than one item
+#
+# If the provides no entry, returns 0
+#
+# If the user chooses one item, that item is echoed to stdout
+###/doc
+function uchoose {
+	local mesg=$1; shift
+	while true; do
+		local thechoice="$(uchoose_multi "$mesg" "$*")"
+		local lines=$(echo "$thechoice" | wc -l)
+		if [[ $lines = 1 ]]; then
+			echo "$thechoice"
+			return 0
+		else
+			warne "Too many results"
+		fi
+	done
+}
+
 
 check_ppa_exists() {
 	grep minetest /etc/apt/sources.list* -r -q
 }
 
 add_ppa() {
-	check_ppa_exists && return
+	check_ppa_exists && {
+		warne "PPA already setup - you may already have installed Minetest Server Tools."
+		uconfirm "Proceed with installation ?" || faile "Aborted."
+		return
+	}
 	add-apt-repository -y ppa:minetestdevs/stable
 }
 
@@ -126,13 +240,15 @@ install_binaries() {
 }
 
 add_python_tools() {
-	apt install python3-pip -y
-	pip3 install --upgrade pip3
-	pip3 install jinja2
+	apt install python-pip -y
+	pip install --upgrade pip
+	pip install jinja2
 }
 
 add_supporting_files() {
-	
+	#FIXME -u option makes sure we don't wallop anything newer than our copy
+	#    we would really want to never overwrite anything, just in case...
+	rsync -au pkg/ /
 }
 
 main() {
@@ -140,7 +256,7 @@ main() {
 
 	add_ppa || faile "Could not install minetest PPA"
 	install_binaries || faile "Could not install minetest"
-	add_python_tools
+	add_python_tools || faile "Could not add essential python tools"
 
 	add_supporting_files
 	
