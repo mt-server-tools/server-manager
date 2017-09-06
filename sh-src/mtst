@@ -2,15 +2,58 @@
 
 #%include autohelp.sh bashout.sh colours.sh
 
-#%include default-locations.sh new-server.sh
+#%include default-locations.sh
+
+# ----- Modules
+#%include new-server.sh
+#%include list.sh
+#%include configure.sh
+#%include mods.sh
+#%include edit.sh
+#%include sync.sh
+#%include server.sh
 
 mtst:parse_args() {
 	while [[ -n "$*" ]]; do
 		local arg="$1"; shift
 
 		case "$arg" in
+		list)
+			list:main "$@"
+			exit
+			;;
 		new-server)
 			newserver:main "$@"
+			exit "$?"
+			;;
+		configure)
+			# Reconfigure a known server
+			# using the autojinja tool
+			configure:main "$@"
+			exit "$?"
+			;;
+		mod)
+			# Perform an operation on an account's mods
+			# Specifically, installs mods to a named account
+			mods:main "$@"
+			exit "$?"
+			;;
+		edit)
+			# Edit one of the properties files
+			# like minetest.conf, world.mt
+			edit:main "$@"
+			exit "$?"
+			;;
+		sync)
+			# Sync information from all minetest.conf
+			# useful when a server's port has been changed for example
+			sync:main "$@"
+			exit "$?"
+			;;
+		server)
+			# Perform a server action
+			# start/stop/restart server, view log file
+			server:main "$@"
 			exit "$?"
 			;;
 		*)
