@@ -1,0 +1,350 @@
+#!/bin/bash
+
+#!/bin/bash
+
+### printhelp Usage:bbuild
+# Write your help as documentation comments in your script
+#
+# If you need to output the help from a running script, call the
+# `printhelp` function and it will print the help documentation
+# in the current script to stdout
+#
+# A help comment looks like this:
+#
+#	### <title> Usage:help
+#	#
+#	# <some content>
+#	#
+#	# end with "###/doc" on its own line (whitespaces before
+#	# and after are OK)
+#	#
+#	###/doc
+#
+###/doc
+
+CHAR='#'
+
+function printhelp {
+	local USAGESTRING=help
+	local TARGETFILE=$0
+	if [[ -n "$*" ]]; then USAGESTRING="$1" ; shift; fi
+	if [[ -n "$*" ]]; then TARGETFILE="$1" ; shift; fi
+
+        echo -e "\n$(basename "$TARGETFILE")\n===\n"
+        local SECSTART='^\s*'"$CHAR$CHAR$CHAR"'\s+(.+?)\s+Usage:'"$USAGESTRING"'\s*$'
+        local SECEND='^\s*'"$CHAR$CHAR$CHAR"'\s*/doc\s*$'
+        local insec="$(mktemp --tmpdir)"; rm "$insec"
+        cat "$TARGETFILE" | while read secline; do
+                if [[ "$secline" =~ $SECSTART ]]; then
+                        touch "$insec"
+                        echo -e "\n${BASH_REMATCH[1]}\n---\n"
+                elif [[ -f $insec ]]; then
+                        if [[ "$secline" =~ $SECEND ]]; then
+                                rm "$insec"
+                        else
+				echo "$secline" | sed -r "s/^\s*$CHAR//g"
+                        fi
+                fi
+        done
+        if [[ -f "$insec" ]]; then
+                echo "WARNING: Non-terminated help block." 1>&2
+		rm "$insec"
+        fi
+	echo ""
+}
+
+### automatic help Usage:main
+#
+# automatically call help if "--help" is detected in arguments
+#
+###/doc
+if [[ "$@" =~ --help ]]; then
+	cols="$(tput cols)"
+	printhelp | fold -w "$cols" -s
+	exit 0
+fi
+#!/bin/bash
+
+
+MODE_DEBUG=no
+MODE_DEBUG_VERBOSE=no
+
+### debuge MESSAGE Usage:bbuild
+# print a blue debug message to stderr
+# only prints if MODE_DEBUG is set to "yes"
+###/doc
+function debuge {
+	if [[ "$MODE_DEBUG" = yes ]]; then
+		echo -e "${CBBLU}DEBUG:$CBLU$*$CDEF" 1>&2
+	fi
+}
+
+### infoe MESSAGE Usage:bbuild
+# print a green informational message to stderr
+###/doc
+function infoe {
+	echo -e "$CGRN$*$CDEF" 1>&2
+}
+
+### warne MESSAGE Usage:bbuild
+# print a yellow warning message to stderr
+###/doc
+function warne {
+	echo -e "${CBYEL}WARN:$CYEL $*$CDEF" 1>&2
+}
+
+### faile [CODE] MESSAGE Usage:bbuild
+# print a red failure message to stderr and exit with CODE
+# CODE must be a number
+# if no code is specified, error code 127 is used
+###/doc
+function faile {
+	local ERCODE=127
+	local numpat='^[0-9]+$'
+
+	if [[ "$1" =~ $numpat ]]; then
+		ERCODE="$1"; shift
+	fi
+
+	echo "${CBRED}ERROR FAIL:$CRED$*$CDEF" 1>&2
+	exit $ERCODE
+}
+
+function dumpe {
+	echo -n "[1;35m$*" 1>&2
+	echo -n "[0;35m" 1>&2
+	cat - 1>&2
+	echo -n "[0m" 1>&2
+}
+
+function breake {
+	if [[ "$MODE_DEBUG" != yes ]]; then
+		return
+	fi
+
+	read -p "${CRED}BREAKPOINT: $* >$CDEF " >&2
+	if [[ "$REPLY" =~ $(echo 'quit|exit|stop') ]]; then
+		faile "ABORT"
+	fi
+}
+
+### Auto debug Usage:main
+# When included, bashout processes a special "--debug" flag
+#
+# It does not remove the debug flag from arguments.
+###/doc
+
+if [[ "$*" =~ --debug ]]; then
+	MODE_DEBUG=yes
+
+	if [[ "$MODE_DEBUG_VERBOSE" = yes ]]; then
+		set -x
+	fi
+fi
+#!/bin/bash
+
+### Colours for bash Usage:bbuild
+# A series of colour flags for use in outputs.
+#
+# Example:
+# 	
+# 	echo "${CRED}Some red text ${CBBLU} some blue text $CDEF some text in the terminal's default colour"
+#
+# Colours available:
+#
+# CDEF -- switches to the terminal default
+#
+# CRED, CBRED -- red and bright/bold red
+# CGRN, CBGRN -- green and bright/bold green
+# CYEL, CBYEL -- yellow and bright/bold yellow
+# CBLU, CBBLU -- blue and bright/bold blue
+# CPUR, CBPUR -- purple and bright/bold purple
+#
+###/doc
+
+export CRED="[31m"
+export CGRN="[32m"
+export CYEL="[33m"
+export CBLU="[34m"
+export CPUR="[35m"
+export CBRED="[1;31m"
+export CBGRN="[1;32m"
+export CBYEL="[1;33m"
+export CBBLU="[1;34m"
+export CBPUR="[1;35m"
+export CDEF="[0m"
+
+MTST_bins=/usr/share/mt-server-tools/bin
+MTST_service_template=/usr/share/mt-server-tools/resources/service.template
+MTST_default_config=/usr/share/mt-server-tools/resources/mintest.conf.template
+MTST_default_worlds=/usr/share/mt-server-tools/resources/default-worlds
+MTST_accounts=/etc/mt-server-tools/accounts.txt
+#!/bin/bash
+
+### Varify Usage:bbuild
+# Make a string into a valid variable name or file name
+#
+# Replaces any string of invalid characters into a "_"
+#
+# Valid characters for varify_var are:
+#
+# * a-z
+# * A-Z
+# * 0-9
+# * underscore ("_")
+#
+# Valid characters for varify_fil are as above, plus:
+#
+# * dash ("-")
+# * period (".")
+#
+# Can be used to produce filenames.
+###/doc
+
+function varify_var {
+	echo "$*" | sed -r 's/[^a-zA-Z0-9_]/_/g'
+}
+
+function varify_fil {
+	echo "$*" | sed -r 's/[^a-zA-Z0-9_.-]/_/g'
+}
+
+### new-server Usage:help
+#
+# The `new-server` command helps set up a new game server in a dedicated account
+#
+# Required parameters:
+#
+# -s, --sys-servername NAME
+# 	A system username to create to confine the server
+#
+# -a, --admin ADMIN
+# 	The playername of the game admin
+#
+# -t, --title TITLE
+# 	A title for the server, shown in online lists
+#
+# --hostname ADDRESS
+# 	The address or host name of the server
+#
+# Optional parameters:
+#
+# --description DESCRIPTION
+# 	A nice description for players to see in online lists
+#
+###/doc
+
+bb:varcollapse() {
+	echo "$1" | sed -r 's/[^a-zA-Z0-9]+//g'
+}
+
+newserver:parse_args() {
+
+	while [[ -n "$*" ]]; do
+		local arg="$1"; shift
+
+		case "$arg" in
+		-a|--admin)
+			MTST_game_admin="$(bb:varcollapse "$1")"; shift
+			;;
+		-t|--title)
+			MTST_game_title="$1"; shift
+			;;
+		-s|--sys-servername)
+			MTST_sys_servername="$(bb:varcollapse "$1")"; shift
+			;;
+		--hostname)
+			MTST_hostname="$1"; shift
+			;;
+		--description)
+			MTST_game_description="$1"; shift
+			;;
+		esac
+	done
+
+	newserver:verify_requirements
+}
+
+newserver:verify_requirements() {
+	[[ -n "$MTST_sys_servername" ]] || faile "Account name required"
+	[[ -n "$MTST_game_admin" ]] || faile "Admin player name required"
+	[[ -n "$MTST_game_title" ]] || faile "Game title required"
+	[[ -n "$MTST_hostname" ]] || faile "Hostname required"
+}
+
+newserver:create_server_data() {
+	local u="$MTST_sys_servername"
+
+	useradd -m "$u"
+	passwd "$u"
+
+	(
+		cd ~"$u"/
+		mkdir -p .minetest/{worlds,mods,games}
+		cp -r "$MTST_default_worlds/leveldb" .minetest/worlds/world
+		
+		echo "$MTST_config_data" > .minetest/minetest.conf
+
+		chown -R "$u:$u" .minetest
+	)
+
+	echo "$MTST_service_data" > "/etc/systemd/system/mt-$MTST_sys_servername.service"
+	newserver:register_port
+}
+
+newserver:get_available_port() {
+	local lastport="$(grep -v -P '^(\s*#|\s*$)' "$MTST_accounts" | cut -d: -f2 | sort | tail -n 1)" || faile "Accounts file [$MTST_accounts] not available"
+
+	if [[ -z "$lastport" ]]; then
+		MTST_port=30000
+	else
+		MTST_port=$((lastport + 1))
+	fi
+}
+
+newserver:register_port() {
+	echo "$MTST_sys_servername:$MTST_port" >> "$MTST_accounts"
+}
+
+newserver:get_config_data() {
+	newserver:get_available_port || faile "Could not get port data"
+
+	local config_params=(-t "$MTST_game_title" -a "$MTST_hostname" -p "$MTST_port" -n "$MTST_game_admin")
+	MTST_config_data="$(autojinja "$MTST_default_config" "${config_params[@]}")" || return "$?"
+}
+
+newserver:get_service_data() {
+	local service_params=(-u "$MTST_sys_servername" -d "$MTST_sys_servername for minetest")
+	MTST_service_data="$(autojinja "$MTSTS_service_template" "$MTST_server_name" "${service_params[@]}")" || return "$?"
+}
+
+newserver:main() {
+	newserver:parse_args "$@"
+
+	newserver:get_config_data
+	newserver:get_service_data
+
+	newserver:create_server_data "$@"
+}
+
+mtst:parse_args() {
+	while [[ -n "$*" ]]; do
+		local arg="$1"; shift
+
+		case "$arg" in
+		new-server)
+			newserver:main "$@"
+			exit "$?"
+			;;
+		*)
+			faile "Unknown action $arg"
+			;;
+		esac
+	done
+}
+
+mtst:main() {
+	mtst:parse_args "$@"
+}
+
+mtst:main "$@"
