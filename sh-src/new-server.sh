@@ -84,7 +84,7 @@ newserver:create_server_data() {
 }
 
 newserver:get_available_port() {
-	local lastport="$(grep -v -P '^(\s*#|\s*$)' "$MTST_accounts" | cut -d: -f2 | sort | tail -n 1)"
+	local lastport="$(grep -v -P '^(\s*#|\s*$)' "$MTST_accounts" | cut -d: -f2 | sort | tail -n 1)" || faile "Accounts file [$MTST_accounts] not available"
 
 	if [[ -z "$lastport" ]]; then
 		MTST_port=30000
